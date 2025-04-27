@@ -88,7 +88,7 @@ public class AuthService(ApplicationDbContext context, JwtSettings jwtSettings) 
             };
         }
 
-        user.LastLoginAt = DateTime.Now;
+        user.LastLoginAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         var token = GenerateJwtToken(user);
         return new AuthResponseDto

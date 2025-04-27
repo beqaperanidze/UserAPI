@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UserAPI.Auth;
 using UserAPI.Data;
+using UserAPI.Services.Implementations;
+using UserAPI.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +38,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("RequireAdminRole", policy => policy.RequireRole("ADMIN"))
     .AddPolicy("RequireUserRole", policy => policy.RequireRole("USER"));
-
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

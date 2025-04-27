@@ -12,11 +12,16 @@ using UserAPI.Services.Interfaces;
 
 namespace UserAPI.Services.Implementations;
 
-public class AuthService(ApplicationDbContext context, JwtSettings jwtSettings) : IAuthService
-
+public class AuthService : IAuthService
 {
-    private readonly ApplicationDbContext _context = context;
-    private readonly JwtSettings _jwtSettings = jwtSettings;
+    private readonly ApplicationDbContext _context;
+    private readonly JwtSettings _jwtSettings;
+
+    public AuthService(ApplicationDbContext context, JwtSettings jwtSettings)
+    {
+        _context = context;
+        _jwtSettings = jwtSettings;
+    }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerUserDto)
     {
@@ -157,7 +162,7 @@ public class AuthService(ApplicationDbContext context, JwtSettings jwtSettings) 
         return true;
     }
 
-    private static UserDto MapUserToDto(User user)
+      private static UserDto MapUserToDto(User user)
     {
         return new UserDto
         {

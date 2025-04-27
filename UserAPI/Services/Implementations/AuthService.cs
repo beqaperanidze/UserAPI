@@ -66,9 +66,38 @@ public class AuthService(ApplicationDbContext context, JwtSettings jwtSettings) 
         };
     }
 
-    public Task<AuthResponseDto> LoginAsync(RegisterUserDto registerUserDto)
+    public async Task<AuthResponseDto> LoginAsync(LoginUserDto loginUserDto)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Username == loginUserDto.Username);
+        if (user == null)
+        {
+            return new AuthResponseDto()
+            {
+                Success = false,
+                Message = "Invalid username or password"
+            };
+        }
+
+        if (!VerifyPasswordHash(loginUserDto.Password, user.PasswordHash, user.PasswordSalt))
+        {
+            return new AuthResponseDto()
+            {
+                Success = false,
+                Message = "Invalid username or password"
+            };
+        }
+
+        user.LastLoginAt = DateTime.Now;
+        await _context.SaveChangesAsync();
+        var token = GenerateJwtToken(user);
+        return new AuthResponseDto
+        {
+            Success = true,
+            Token = token,
+            Message = "Login successful",
+            User = MapUserToDto(user)
+        };
     }
 
     public async Task<bool> UserExistsAsync(string username)
@@ -110,6 +139,22 @@ public class AuthService(ApplicationDbContext context, JwtSettings jwtSettings) 
         using var hmac = new HMACSHA512();
         passwordSalt = hmac.Key;
         passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+    }
+
+    private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+    {
+        using var hmac = new HMACSHA512(storedSalt);
+        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+        for (int i = 0; i < computedHash.Length; i++)
+        {
+            if (computedHash[i] != storedHash[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static UserDto MapUserToDto(User user)
